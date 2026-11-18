@@ -51,6 +51,10 @@ Interpretation:
 - **NOT REPRODUCED** — the vulnerable path was not taken: no AVX-512 VBMI, a fixed JDK, or
   intrinsics disabled. A negative is *not* a safety verdict — JIT/JVM-option differences can suppress it.
 
+Note on the first request after a cold start: the very first `/probe` immediately after the
+JVM starts can miss the reproduction (C2 has not yet committed the intrinsic compilation).
+Subsequent runs are stable — this is exactly the "negative ≠ safe" caveat in the community writeup.
+
 ## Running
 
 ```sh
