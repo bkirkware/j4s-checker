@@ -1,6 +1,6 @@
 jdk21/
 jdk21.tar.gz
 server.log
-*.class
+src/*.class
 manifest.txt
 .venv*

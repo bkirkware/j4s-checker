@@ -67,11 +67,37 @@ PORT=8080 java -jar j4s-checker.jar
 
 ### Cloud Foundry
 
-```sh
-cf push j4s-checker --strategy=none -m 256M -i 1
+The Java buildpack's **Java Main container reads `META-INF/MANIFEST.MF` from the
+application root — it does not inspect the *contents* of a `.jar`**. So the artifact
+must be pushed **exploded** (classes + `META-INF/` at the top level), not as a zip jar.
+Pushing a lone `foo.jar` fails staging with:
+
+```
+Finalize failed ... RuntimeError: No container can run this application.
 ```
 
-`.java-version` pins JDK 21. (The app binds `PORT`.)
+The `deploy/` directory is pre-exploded for exactly this:
+
+```sh
+cd deploy
+cf push j4s-checker -m 1G -i 1 -b java_buildpack_offline
+```
+
+- `.java-version` pins JDK 21 (the `64 × 'A' + '='` trigger form).
+- `-m 1G`: the buildpack memory calculator needs headroom; 256M is insufficient and the
+  instance crash-loops with "insufficient memory remaining for heap".
+- The app binds the CF-assigned `PORT`.
+
+## Verified lab results (2026-11-18)
+
+Same droplet, same BellSoft JRE `21.0.13.0.3+5` (unpatched), different CPU:
+
+| Space | CPU | All four flags | bytesChanged | Result |
+|---|---|---|---|---|
+| `cody-k8s` (`j4s-checker`) | AMD Ryzen 9 9955HX | yes (incl. `avx512vbmi`) | 62 | **REPRODUCED** |
+| `cody` (`j4s-checker-cody`) | Intel Xeon D-1518 | no (no AVX-512) | 0 | NOT REPRODUCED |
+
+The CPU is the sole variable — this is the hardware gate the CVE depends on.
 
 ### Mitigations (for a host that reproduces)
 
@@ -81,10 +107,12 @@ cf push j4s-checker --strategy=none -m 256M -i 1
 
 ## Lab demonstration (2026-11-18)
 
-| Space | Cluster / cells | CPU | Expected |
-|---|---|---|---|
-| `cody-k8s` | TKG guest `tnz-e142e57bf8` (AMD Ryzen 9 9955HX, per-VM masking exposes VBMI) | all 4 flags | **REPRODUCED** |
-| `cody` | legacy BOSH cells (Intel Xeon D-1518, no AVX-512) | none | NOT REPRODUCED |
+Live apps left running for independent verification:
+
+| Space | App | URL | CPU | Expected |
+|---|---|---|---|---|
+| `cody-k8s` | `j4s-checker` | `j4s-checker.apps.tanzu.kirkware.net` | AMD Ryzen 9 9955HX (VBMI) | **REPRODUCED** |
+| `cody` | `j4s-checker-cody` | `j4s-checker-cody.apps.tanzu.kirkware.net` | Intel Xeon D-1518 | NOT REPRODUCED |
 
 Full investigation: [`cve-2026-114938-java4shell-2026-11-18.md`](https://github.com/kirkware/kirkware-agents/blob/main/agents/alana/reports/cve-2026-114938-java4shell-2026-11-18/cve-2026-114938-java4shell-2026-11-18.md)
 
