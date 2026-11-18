@@ -99,7 +99,7 @@ Same droplet, same BellSoft JRE `21.0.13.0.3+5` (unpatched), different CPU:
 | Space | CPU | All four flags | bytesChanged | Result |
 |---|---|---|---|---|
 | `cody-k8s` (`j4s-checker`) | AMD Ryzen 9 9955HX | yes (incl. `avx512vbmi`) | 62 | **REPRODUCED** |
-| `cody` (`j4s-checker-cody`) | Intel Xeon D-1518 | no (no AVX-512) | 0 | NOT REPRODUCED |
+| `cody` (`j4s-checker-vms`) | Intel Xeon D-1518 | no (no AVX-512) | 0 | NOT REPRODUCED |
 
 The CPU is the sole variable — this is the hardware gate the CVE depends on.
 
@@ -115,8 +115,8 @@ Live apps left running for independent verification:
 
 | Space | App | URL | CPU | Expected |
 |---|---|---|---|---|
-| `cody-k8s` | `j4s-checker` | `j4s-checker.apps.tanzu.kirkware.net` | AMD Ryzen 9 9955HX (VBMI) | **REPRODUCED** |
-| `cody` | `j4s-checker-cody` | `j4s-checker-cody.apps.tanzu.kirkware.net` | Intel Xeon D-1518 | NOT REPRODUCED |
+| `cody-k8s` |  `j4s-checker` | `j4s-checker-k8s.apps.tanzu.kirkware.net` | AMD Ryzen 9 9955HX (VBMI) | **REPRODUCED** |
+| `cody` | `j4s-checker-vms` | `j4s-checker-vms.apps.tanzu.kirkware.net` | Intel Xeon D-1518 | NOT REPRODUCED |
 
 Full investigation: [`cve-2026-114938-java4shell-2026-11-18.md`](https://github.com/kirkware/kirkware-agents/blob/main/agents/alana/reports/cve-2026-114938-java4shell-2026-11-18/cve-2026-114938-java4shell-2026-11-18.md)
 
